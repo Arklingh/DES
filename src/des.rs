@@ -54,6 +54,322 @@ pub mod des_alg {
     }
 }
 
+pub mod tdes_alg {
+    pub mod EEE3 {
+        use crate::des::{
+            utils::{compute_subkeys, des_cbc, des_cbc_decrypt, des_ecb, key_to_u64},
+            Key,
+        };
+
+        #[inline]
+        pub fn ecb_encrypt(message: &[u8], key: &Vec<Key>) -> (Vec<u8>, Option<Vec<u8>>) {
+            let first_cycle = {
+                let key_1 = key_to_u64(&key[0]);
+                let subkeys = compute_subkeys(key_1);
+
+                des_ecb(&message, &subkeys)
+            };
+            let second_cycle = {
+                let key_2 = key_to_u64(&key[1]);
+                let subkeys = compute_subkeys(key_2);
+
+                des_ecb(&first_cycle, &subkeys)
+            };
+            {
+                let key_3 = key_to_u64(&key[2]);
+                let subkeys = compute_subkeys(key_3);
+
+                (des_ecb(&second_cycle, &subkeys), None)
+            }
+        }
+
+        #[inline]
+        pub fn ecb_decrypt(cipher: &[u8], key: &Vec<Key>) -> (Vec<u8>, Option<Vec<u8>>) {
+            let first_cycle = {
+                let key = key_to_u64(&key[2]);
+                let subkeys = compute_subkeys(key).into_iter().rev().collect::<Vec<_>>();
+
+                des_ecb(&cipher, &subkeys)
+            };
+            let second_cycle = {
+                let key = key_to_u64(&key[1]);
+                let subkeys = compute_subkeys(key).into_iter().rev().collect::<Vec<_>>();
+
+                des_ecb(&first_cycle, &subkeys)
+            };
+            {
+                let key = key_to_u64(&key[0]);
+                let subkeys = compute_subkeys(key).into_iter().rev().collect::<Vec<_>>();
+
+                (des_ecb(&second_cycle, &subkeys), None)
+            }
+        }
+
+        #[inline]
+        pub fn cbc_encrypt(
+            message: &[u8],
+            key: &Vec<Key>,
+            iv: &[u8],
+            last_block: Option<Vec<u8>>,
+        ) -> (Vec<u8>, Option<Vec<u8>>) {
+            let first_cycle = {
+                let key = key_to_u64(&key[0]);
+                let subkeys = compute_subkeys(key);
+
+                des_cbc(&message, &subkeys, &iv, last_block)
+            };
+            let second_cycle = {
+                let key = key_to_u64(&key[1]);
+                let subkeys = compute_subkeys(key);
+
+                des_cbc(&first_cycle.0, &subkeys, &iv, first_cycle.1)
+            };
+            {
+                let key = key_to_u64(&key[2]);
+                let subkeys = compute_subkeys(key);
+
+                des_cbc(&second_cycle.0, &subkeys, &iv, second_cycle.1)
+            }
+        }
+
+        #[inline]
+        pub fn cbc_decrypt(
+            message: &[u8],
+            key: &Vec<Key>,
+            iv: &[u8],
+            last_block: Option<Vec<u8>>,
+        ) -> (Vec<u8>, Option<Vec<u8>>) {
+            let first_cycle = {
+                let key = key_to_u64(&key[0]);
+                let subkeys = compute_subkeys(key).into_iter().rev().collect::<Vec<_>>();
+
+                des_cbc_decrypt(&message, &subkeys, &iv, last_block)
+            };
+            let second_cycle = {
+                let key = key_to_u64(&key[1]);
+                let subkeys = compute_subkeys(key).into_iter().rev().collect::<Vec<_>>();
+
+                des_cbc_decrypt(&first_cycle.0, &subkeys, &iv, first_cycle.1)
+            };
+            {
+                let key = key_to_u64(&key[2]);
+                let subkeys = compute_subkeys(key).into_iter().rev().collect::<Vec<_>>();
+
+                des_cbc_decrypt(&second_cycle.0, &subkeys, &iv, second_cycle.1)
+            }
+        }
+    }
+
+    pub mod EDE3 {
+        use crate::des::{
+            utils::{compute_subkeys, des_cbc, des_cbc_decrypt, des_ecb, key_to_u64},
+            Key,
+        };
+
+        #[inline]
+        pub fn ecb_encrypt(message: &[u8], key: &Vec<Key>) -> (Vec<u8>, Option<Vec<u8>>) {
+            let first_cycle = {
+                let key = key_to_u64(&key[0]);
+                let subkeys = compute_subkeys(key);
+
+                des_ecb(&message, &subkeys)
+            };
+            let second_cycle = {
+                let key = key_to_u64(&key[1]);
+                let subkeys = compute_subkeys(key).into_iter().rev().collect::<Vec<_>>();
+
+                des_ecb(&first_cycle, &subkeys)
+            };
+            {
+                let key = key_to_u64(&key[2]);
+                let subkeys = compute_subkeys(key);
+
+                (des_ecb(&second_cycle, &subkeys), None)
+            }
+        }
+
+        #[inline]
+        pub fn ecb_decrypt(cipher: &[u8], key: &Vec<Key>) -> (Vec<u8>, Option<Vec<u8>>) {
+            let first_cycle = {
+                let key = key_to_u64(&key[2]);
+                let subkeys = compute_subkeys(key).into_iter().rev().collect::<Vec<_>>();
+
+                des_ecb(&cipher, &subkeys)
+            };
+            let second_cycle = {
+                let key = key_to_u64(&key[1]);
+                let subkeys = compute_subkeys(key);
+
+                des_ecb(&first_cycle, &subkeys)
+            };
+            {
+                let key = key_to_u64(&key[0]);
+                let subkeys = compute_subkeys(key).into_iter().rev().collect::<Vec<_>>();
+
+                (des_ecb(&second_cycle, &subkeys), None)
+            }
+        }
+
+        #[inline]
+        pub fn cbc_encrypt(
+            message: &[u8],
+            key: &Vec<Key>,
+            iv: &[u8],
+            last_block: Option<Vec<u8>>,
+        ) -> (Vec<u8>, Option<Vec<u8>>) {
+            let first_cycle = {
+                let key = key_to_u64(&key[0]);
+                let subkeys = compute_subkeys(key);
+
+                des_cbc(&message, &subkeys, &iv, last_block)
+            };
+            let second_cycle = {
+                let key = key_to_u64(&key[1]);
+                let subkeys = compute_subkeys(key).into_iter().rev().collect::<Vec<_>>();
+
+                des_cbc(&first_cycle.0, &subkeys, &iv, first_cycle.1)
+            };
+            {
+                let key = key_to_u64(&key[2]);
+                let subkeys = compute_subkeys(key);
+
+                des_cbc(&second_cycle.0, &subkeys, &iv, second_cycle.1)
+            }
+        }
+
+        pub fn cbc_decrypt(
+            message: &[u8],
+            key: &Vec<Key>,
+            iv: &[u8],
+            last_block: Option<Vec<u8>>,
+        ) -> (Vec<u8>, Option<Vec<u8>>) {
+            let first_cycle = {
+                let key = key_to_u64(&key[2]);
+                let subkeys = compute_subkeys(key).into_iter().rev().collect::<Vec<_>>();
+
+                des_cbc_decrypt(&message, &subkeys, &iv, last_block)
+            };
+            let second_cycle = {
+                let key = key_to_u64(&key[1]);
+                let subkeys = compute_subkeys(key);
+
+                des_cbc(&first_cycle.0, &subkeys, &iv, first_cycle.1)
+            };
+            {
+                let key = key_to_u64(&key[0]);
+                let subkeys = compute_subkeys(key).into_iter().rev().collect::<Vec<_>>();
+
+                des_cbc_decrypt(&second_cycle.0, &subkeys, &iv, second_cycle.1)
+            }
+        }
+    }
+
+    pub mod EEE2 {
+        use crate::des::{
+            utils::{compute_subkeys, des_cbc, des_cbc_decrypt, des_ecb, key_to_u64},
+            Key,
+        };
+
+        #[inline]
+        pub fn ecb_encrypt(message: &[u8], key: &Vec<Key>) -> (Vec<u8>, Option<Vec<u8>>) {
+            let first_cycle = {
+                let key = key_to_u64(&key[0]);
+                let subkeys = compute_subkeys(key);
+
+                des_ecb(&message, &subkeys)
+            };
+            let second_cycle = {
+                let key = key_to_u64(&key[1]);
+                let subkeys = compute_subkeys(key);
+
+                des_ecb(&first_cycle, &subkeys)
+            };
+            {
+                let key = key_to_u64(&key[0]);
+                let subkeys = compute_subkeys(key);
+
+                (des_ecb(&second_cycle, &subkeys), None)
+            }
+        }
+
+        #[inline]
+        pub fn ecb_decrypt(cipher: &[u8], key: &Vec<Key>) -> (Vec<u8>, Option<Vec<u8>>) {
+            let first_cycle = {
+                let key = key_to_u64(&key[0]);
+                let subkeys = compute_subkeys(key).into_iter().rev().collect::<Vec<_>>();
+
+                des_ecb(&cipher, &subkeys)
+            };
+            let second_cycle = {
+                let key = key_to_u64(&key[1]);
+                let subkeys = compute_subkeys(key).into_iter().rev().collect::<Vec<_>>();
+
+                des_ecb(&first_cycle, &subkeys)
+            };
+            {
+                let key = key_to_u64(&key[0]);
+                let subkeys = compute_subkeys(key).into_iter().rev().collect::<Vec<_>>();
+
+                (des_ecb(&second_cycle, &subkeys), None)
+            }
+        }
+
+        #[inline]
+        pub fn cbc_encrypt(
+            message: &[u8],
+            key: &Vec<Key>,
+            iv: &[u8],
+            last_block: Option<Vec<u8>>,
+        ) -> (Vec<u8>, Option<Vec<u8>>) {
+            let first_cycle = {
+                let key = key_to_u64(&key[0]);
+                let subkeys = compute_subkeys(key);
+
+                des_cbc(&message, &subkeys, &iv, last_block)
+            };
+            let second_cycle = {
+                let key = key_to_u64(&key[1]);
+                let subkeys = compute_subkeys(key);
+
+                des_cbc(&first_cycle.0, &subkeys, &iv, first_cycle.1)
+            };
+            {
+                let key = key_to_u64(&key[0]);
+                let subkeys = compute_subkeys(key);
+
+                des_cbc(&second_cycle.0, &subkeys, &iv, second_cycle.1)
+            }
+        }
+
+        #[inline]
+        pub fn cbc_decrypt(
+            message: &[u8],
+            key: &Vec<Key>,
+            iv: &[u8],
+            last_block: Option<Vec<u8>>,
+        ) -> (Vec<u8>, Option<Vec<u8>>) {
+            let first_cycle = {
+                let key = key_to_u64(&key[0]);
+                let subkeys = compute_subkeys(key).into_iter().rev().collect::<Vec<_>>();
+
+                des_cbc_decrypt(&message, &subkeys, &iv, last_block)
+            };
+            let second_cycle = {
+                let key = key_to_u64(&key[1]);
+                let subkeys = compute_subkeys(key).into_iter().rev().collect::<Vec<_>>();
+
+                des_cbc_decrypt(&first_cycle.0, &subkeys, &iv, first_cycle.1)
+            };
+            {
+                let key = key_to_u64(&key[0]);
+                let subkeys = compute_subkeys(key).into_iter().rev().collect::<Vec<_>>();
+
+                des_cbc_decrypt(&second_cycle.0, &subkeys, &iv, second_cycle.1)
+            }
+        }
+    }
+}
+
 /// Utility functions for the Data Encryption Standard (DES) algorithm.
 pub mod utils {
     use super::*;

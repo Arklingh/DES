@@ -1,18 +1,18 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
 mod des;
-use des::{des_alg, /*tdes_alg,*/ Key};
+use des::{des_alg, tdes_alg, Key};
 use eframe::egui::{self, ViewportBuilder, ViewportCommand};
 use eframe::egui::{Layout, RichText};
 use eframe::Theme;
-// use num_cpus;
-// use rayon::ThreadPoolBuilder;
+// use num_cpus;                     <- These will be used for multirhreading
+// use rayon::ThreadPoolBuilder;     <-|
+// use std::collections::BinaryHeap; <-|
+// use std::sync::{Arc, Mutex};      <-|
 use regex::Regex;
-// use std::collections::BinaryHeap;
 use std::io::{Read, Write};
 use std::process;
 use std::sync::mpsc::{Receiver, Sender};
-// use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 use tokio::io::AsyncReadExt;
 use tokio::io::AsyncWriteExt;
@@ -49,12 +49,49 @@ macro_rules! crypt_operation {
             (Algorithm::DES, Action::Decrypt, Mode::ECB) => {
                 des_alg::ecb_decrypt($input_data, $keys)
             }
+            (Algorithm::TDES_EEE3, Action::Encrypt, Mode::ECB) => {
+                tdes_alg::EEE3::ecb_encrypt($input_data, $keys)
+            }
+            (Algorithm::TDES_EEE3, Action::Decrypt, Mode::ECB) => {
+                tdes_alg::EEE3::ecb_decrypt($input_data, $keys)
+            }
+            (Algorithm::TDES_EDE3, Action::Encrypt, Mode::ECB) => {
+                tdes_alg::EDE3::ecb_encrypt($input_data, $keys)
+            }
+            (Algorithm::TDES_EDE3, Action::Decrypt, Mode::ECB) => {
+                tdes_alg::EDE3::ecb_decrypt($input_data, $keys)
+            }
+            (Algorithm::TDES_EEE2, Action::Encrypt, Mode::ECB) => {
+                tdes_alg::EEE2::ecb_encrypt($input_data, $keys)
+            }
+            (Algorithm::TDES_EEE2, Action::Decrypt, Mode::ECB) => {
+                tdes_alg::EEE2::ecb_decrypt($input_data, $keys)
+            }
             (Algorithm::DES, Action::Encrypt, Mode::CBC) => {
                 des_alg::cbc_encrypt($input_data, $keys, $iv, $prev_block)
             }
             (Algorithm::DES, Action::Decrypt, Mode::CBC) => {
                 des_alg::cbc_decrypt($input_data, $keys, $iv, $prev_block)
             }
+            (Algorithm::TDES_EEE3, Action::Encrypt, Mode::CBC) => {
+                tdes_alg::EEE3::cbc_encrypt($input_data, $keys, $iv, $prev_block)
+            }
+            (Algorithm::TDES_EEE3, Action::Decrypt, Mode::CBC) => {
+                tdes_alg::EEE3::cbc_decrypt($input_data, $keys, $iv, $prev_block)
+            }
+            (Algorithm::TDES_EDE3, Action::Encrypt, Mode::CBC) => {
+                tdes_alg::EDE3::cbc_encrypt($input_data, $keys, $iv, $prev_block)
+            }
+            (Algorithm::TDES_EDE3, Action::Decrypt, Mode::CBC) => {
+                tdes_alg::EDE3::cbc_decrypt($input_data, $keys, $iv, $prev_block)
+            }
+            (Algorithm::TDES_EEE2, Action::Encrypt, Mode::CBC) => {
+                tdes_alg::EEE2::cbc_encrypt($input_data, $keys, $iv, $prev_block)
+            }
+            (Algorithm::TDES_EEE2, Action::Decrypt, Mode::CBC) => {
+                tdes_alg::EEE2::cbc_decrypt($input_data, $keys, $iv, $prev_block)
+            }
+
             _ => unreachable!(),
         }
     };
@@ -415,15 +452,18 @@ impl eframe::App for MyApp {
                 }
             });
 
-            // if self.mode == Mode::ECB {
-            //     ui.label("Select a number of threads to be used");
-            //     ui.add(egui::Slider::new(
-            //         &mut self.num_threads,
-            //         1..=num_cpus::get() - 1,
-            //     ));
-            // } else {
-            //     self.num_threads = 1;
-            // }
+            /*
+            if self.mode == Mode::ECB {
+                 ui.label("Select a number of threads to be used");
+                 ui.add(egui::Slider::new(
+                     &mut self.num_threads,
+                     1..=num_cpus::get() - 1,
+                ));
+            } else {
+                self.num_threads = 1;
+            }
+            NOT IMPLEMENTED YET!
+            */
 
             ui.label("\n");
             if self.mode == Mode::ECB {
