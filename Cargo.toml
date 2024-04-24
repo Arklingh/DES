@@ -1,6 +1,6 @@
 [package]
 name = "DES"
-authors = ["Andrii Kurochka andriikurochka@ukr.net"]
+authors = ["Andrii Kurochka <andriikurochka@ukr.net>"]
 version = "0.6.0"
 edition = "2021"
 
